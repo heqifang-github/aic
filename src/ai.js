@@ -21,6 +21,7 @@ export const generateCommitMessage = async (diff) => {
 type 包括：feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert。
 scope 是可选的。
 subject 是对变更的简短描述。
+要求需要对每一个新增、修改、删除的文件进行简要描述，避免使用模糊不清的表达。
 请只输出提交信息本身，不要包含其他解释或 Markdown 代码块标记。
 语言强制使用中文。
 
