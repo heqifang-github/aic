@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { getDiff, hasStagedChanges, commit } from '../src/git.js';
+import { getDiff, hasStagedChanges, commit, hasWorkingChanges, getWorkingChanges, stageAllChanges } from '../src/git.js';
 import { generateCommitMessage } from '../src/ai.js';
 import { getConfig, setConfig, getAllConfig } from '../src/config.js';
 
@@ -64,9 +64,44 @@ program
         }
       }
 
-      if (!(await hasStagedChanges())) {
-        console.log(chalk.yellow('没有检测到暂存的更改。请先使用 `git add` 暂存您的更改。'));
+      // 检查是否有暂存的变更
+      const hasStaged = await hasStagedChanges();
+      const hasWorking = await hasWorkingChanges();
+
+      // 如果没有任何变更
+      if (!hasStaged && !hasWorking) {
+        console.log(chalk.yellow('没有检测到任何更改。'));
         process.exit(1);
+      }
+
+      // 如果有工作区变更（无论是否有暂存区变更）
+      if (hasWorking) {
+        console.log(chalk.blue('检测到以下未暂存的更改：'));
+        const changes = await getWorkingChanges();
+        console.log(changes);
+        console.log();
+
+        const { shouldStage } = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'shouldStage',
+            message: '是否要暂存这些更改并继续？',
+            default: true,
+          },
+        ]);
+
+        if (shouldStage) {
+          console.log(chalk.blue('正在暂存所有更改...'));
+          await stageAllChanges();
+          console.log(chalk.green('✓ 已暂存所有更改'));
+        } else if (!hasStaged) {
+          // 如果选择不暂存，且暂存区也没有变更，则退出
+          console.log(chalk.yellow('操作已取消。请手动使用 `git add` 暂存您想要提交的更改。'));
+          process.exit(1);
+        } else {
+          // 如果选择不暂存，但暂存区有变更，则继续处理暂存区的内容
+          console.log(chalk.blue('将仅对已暂存的变更生成提交信息...'));
+        }
       }
 
       console.log(chalk.blue('正在生成提交信息...'));
