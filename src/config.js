@@ -3,7 +3,7 @@ import Conf from 'conf';
 const config = new Conf({
   projectName: 'aic-cli',
   defaults: {
-    apiKey: '',
+    apiKey: 'sk-667c863009994c3ab4ff7c4b3b5a0e70',
     baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     model: 'qwen-plus',
     language: 'zh'
