@@ -11,7 +11,7 @@ const program = new Command();
 
 program
   .name('aic')
-  .description('AI 提交信息生成器')
+  .description('Git提交信息AI生成器')
   .version('1.0.0');
 
 const runConfig = async () => {
