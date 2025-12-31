@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { getDiff, hasStagedChanges, commit, hasWorkingChanges, getWorkingChanges, stageAllChanges } from '../src/git.js';
+import { getDiff, hasStagedChanges, commit, hasWorkingChanges, getWorkingChanges, stageAllChanges, formatChangesAsTree } from '../src/git.js';
 import { generateCommitMessage } from '../src/ai.js';
 import { getConfig, setConfig, getAllConfig } from '../src/config.js';
 
@@ -78,8 +78,10 @@ program
       if (hasWorking) {
         console.log(chalk.blue('检测到以下未暂存的更改：'));
         const changes = await getWorkingChanges();
-        console.log(changes);
-        console.log();
+        
+        // 使用树形结构展示
+        const treeView = formatChangesAsTree(changes);
+        console.log(treeView);
 
         const { shouldStage } = await inquirer.prompt([
           {

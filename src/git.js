@@ -69,3 +69,85 @@ export const stageAllChanges = async () => {
     throw new Error('Failed to stage changes.');
   }
 };
+
+/**
+ * 将文件列表转换为树形结构
+ * @param {string} gitStatusOutput - git status --short 的输出
+ * @returns {string} 树形结构的字符串
+ */
+export const formatChangesAsTree = (gitStatusOutput) => {
+  if (!gitStatusOutput.trim()) return '';
+
+  const lines = gitStatusOutput.trim().split('\n');
+  const tree = {};
+  
+  // 解析每一行，构建树形数据结构
+  lines.forEach(line => {
+    const match = line.match(/^(..?)\s+(.+)$/);
+    if (!match) return;
+    
+    let status = match[1].trim();
+    let filePath = match[2].trim();
+    
+    // 处理重命名情况: "old_path -> new_path"
+    // 对于重命名，我们只显示新路径
+    if (filePath.includes(' -> ')) {
+      const parts = filePath.split(' -> ');
+      filePath = parts[1].trim();  // 取新路径
+      status = 'R';  // 确保状态为 R
+    }
+    
+    const parts = filePath.split('/');
+    
+    let current = tree;
+    parts.forEach((part, index) => {
+      if (!current[part]) {
+        current[part] = {
+          isFile: index === parts.length - 1,
+          status: index === parts.length - 1 ? status : null,
+          children: {}
+        };
+      }
+      current = current[part].children;
+    });
+  });
+
+  // 递归渲染树形结构
+  const renderTree = (node, prefix = '', isLast = true) => {
+    const entries = Object.entries(node);
+    let result = '';
+    
+    entries.forEach(([name, data], index) => {
+      const isLastEntry = index === entries.length - 1;
+      const connector = isLastEntry ? '└─ ' : '├─ ';
+      const childPrefix = isLastEntry ? '  ' : '│ ';
+      
+      // 添加状态标记
+      let statusIcon = '';
+      if (data.isFile && data.status) {
+        switch (data.status) {
+          case 'M': statusIcon = '📝 '; break;  // 修改
+          case 'A': statusIcon = '✨ '; break;  // 新增
+          case 'D': statusIcon = '🗑️  '; break;  // 删除
+          case 'R': statusIcon = '🔄 '; break;  // 重命名
+          case 'C': statusIcon = '📋 '; break;  // 复制
+          case '??': statusIcon = '❓ '; break; // 未跟踪
+          default: statusIcon = data.status + ' ';
+        }
+      } else if (!data.isFile) {
+        statusIcon = '📁 ';  // 文件夹
+      }
+      
+      result += prefix + connector + statusIcon + name + '\n';
+      
+      // 递归处理子节点
+      if (Object.keys(data.children).length > 0) {
+        result += renderTree(data.children, prefix + childPrefix, isLastEntry);
+      }
+    });
+    
+    return result;
+  };
+
+  return '\n' + renderTree(tree);
+};
