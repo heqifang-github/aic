@@ -3,16 +3,24 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { getDiff, hasStagedChanges, commit, hasWorkingChanges, getWorkingChanges, stageAllChanges, formatChangesAsTree } from '../src/git.js';
 import { generateCommitMessage } from '../src/ai.js';
 import { getConfig, setConfig, getAllConfig } from '../src/config.js';
+
+// 获取 package.json 的路径
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
 const program = new Command();
 
 program
   .name('aic')
   .description('Git提交信息AI生成器')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 const runConfig = async () => {
   const currentConfig = getAllConfig();
@@ -55,10 +63,11 @@ program
 program
   .action(async () => {
     try {
-      // 显示当前使用的模型
+      // 显示版本号和当前使用的模型
+      console.log(chalk.magenta(`\n✨ AIC v${packageJson.version}`));
       const currentModel = getConfig('model') || 'qwen-plus';
       const baseURL = getConfig('baseURL') || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
-      console.log(chalk.cyan(`\n🤖 当前使用模型: ${chalk.bold(currentModel)}`));
+      console.log(chalk.cyan(`🤖 当前模型: ${chalk.bold(currentModel)}`));
       console.log(chalk.gray(`   服务地址: ${baseURL}\n`));
 
       if (!getConfig('apiKey')) {
