@@ -55,6 +55,12 @@ program
 program
   .action(async () => {
     try {
+      // 显示当前使用的模型
+      const currentModel = getConfig('model') || 'qwen-plus';
+      const baseURL = getConfig('baseURL') || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+      console.log(chalk.cyan(`\n🤖 当前使用模型: ${chalk.bold(currentModel)}`));
+      console.log(chalk.gray(`   服务地址: ${baseURL}\n`));
+
       if (!getConfig('apiKey')) {
         console.log(chalk.yellow('未检测到 API Key，请先进行配置。'));
         await runConfig();
